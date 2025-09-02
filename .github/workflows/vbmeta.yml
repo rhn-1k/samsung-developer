@@ -24,20 +24,19 @@ jobs:
           exit 1
         fi
 
-    - name: Starting avbtool
-      run: chmod +x ./avbtool
-
-    - name: Patch vbmeta.img to disable verification
+    - name: Patch vbmeta.img using Python script
       run: |
-        # Extract all descriptors from the original vbmeta to a temporary file
-        ./avbtool info_image --image original_vbmeta.img --output vbmeta_info.txt
+        python vbmeta.py original_vbmeta.img patched_vbmeta.img
 
-        # Rebuild the vbmeta image using the extracted info, but with verification disabled
-        ./avbtool make_vbmeta_image \
-          --flag 2 \
-          --padding_size 4096 \
-          --include_descriptors_from_image original_vbmeta.img \
-          --output patched_vbmeta.img
+    - name: Verify patched file size
+      run: |
+        ORIG_SIZE=$(stat -c%s "original_vbmeta.img")
+        PATCHED_SIZE=$(stat -c%s "patched_vbmeta.img")
+        if [ "$ORIG_SIZE" != "$PATCHED_SIZE" ]; then
+          echo "Error: File size mismatch! Original: $ORIG_SIZE, Patched: $PATCHED_SIZE"
+          exit 1
+        fi
+        echo "File size check passed. Size is $PATCHED_SIZE bytes."
 
     - name: Create .tar archive for Odin
       run: tar -cvf patched_vbmeta.tar patched_vbmeta.img
