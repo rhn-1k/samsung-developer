@@ -37,7 +37,7 @@ jobs:
       run: tar -cvf patched_vbmeta.tar patched_vbmeta.img
 
     - name: Upload Odin-ready .tar artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Odin-Patched-VBMeta
         path: patched_vbmeta.tar
