@@ -1,0 +1,46 @@
+name: Patch VBMeta for Odin
+
+on:
+  workflow_dispatch:
+    inputs:
+      vbmeta_url:
+        description: 'Direct download URL for vbmeta.img'
+        required: true
+        type: string
+
+jobs:
+  patch_and_package:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Download original vbmeta.img
+      run: |
+        wget -O original_vbmeta.img ${{ github.event.inputs.vbmeta_url }}
+        if [ ! -f original_vbmeta.img ]; then
+          echo "Error: Failed to download vbmeta.img."
+          exit 1
+        fi
+
+    - name: Starting avbtool
+      run: chmod +x ./avbtool
+
+    - name: Patch vbmeta.img to disable verification
+      run: |
+        ./avbtool disable_verification \
+          --image original_vbmeta.img \
+          --output patched_vbmeta.img
+
+    - name: Create .tar archive for Odin
+      run: tar -cvf patched_vbmeta.tar patched_vbmeta.img
+
+    - name: Upload Odin-ready .tar artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Odin-Patched-VBMeta
+        path: patched_vbmeta.tar
+
+    - name: Success
+      run: echo "Successfully created patched_vbmeta.tar. Download the artifact."
