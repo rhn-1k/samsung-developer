@@ -29,9 +29,14 @@ jobs:
 
     - name: Patch vbmeta.img to disable verification
       run: |
+        # Extract all descriptors from the original vbmeta to a temporary file
+        ./avbtool info_image --image original_vbmeta.img --output vbmeta_info.txt
+
+        # Rebuild the vbmeta image using the extracted info, but with verification disabled
         ./avbtool make_vbmeta_image \
           --flag 2 \
-          --input_vbmeta original_vbmeta.img \
+          --padding_size 4096 \
+          --include_descriptors_from_image original_vbmeta.img \
           --output patched_vbmeta.img
 
     - name: Create .tar archive for Odin
