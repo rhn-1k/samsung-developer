@@ -16,6 +16,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y python3 tar wget curl
+
     - name: Download original vbmeta.img
       run: |
         wget -O original_vbmeta.img ${{ github.event.inputs.vbmeta_url }}
@@ -26,7 +29,7 @@ jobs:
 
     - name: Patch vbmeta.img using Python script
       run: |
-        python vbmeta.py original_vbmeta.img patched_vbmeta.img
+        python3 vbmeta.py original_vbmeta.img patched_vbmeta.img
 
     - name: Verify patched file size
       run: |
@@ -41,11 +44,20 @@ jobs:
     - name: Create .tar archive for Odin
       run: tar -cvf patched_vbmeta.tar patched_vbmeta.img
 
-    - name: Upload Odin-ready .tar artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Odin-Patched-VBMeta
-        path: patched_vbmeta.tar
-
-    - name: Success
-      run: echo "Successfully created patched_vbmeta.tar. Download the artifact."
+    - name: Upload Odin-ready .tar to Gofile
+      run: |
+        RESPONSE=$(curl -F "file=@patched_vbmeta.tar" \
+                        -H "Authorization: Bearer E29ro0ueg1dXX7CHmJSdrO9puOTUMREk" \
+                        https://upload.gofile.io/uploadFile)
+        
+        echo "Gofile API Response: $RESPONSE"
+        
+        DOWNLOAD_PAGE=$(echo $RESPONSE | grep -o '"downloadPage": *"[^"]*"' | cut -d '"' -f 4)
+        
+        if [ -z "$DOWNLOAD_PAGE" ]; then
+          echo "Error: Could not extract download page URL from Gofile response."
+          exit 1
+        fi
+        
+        echo "File uploaded successfully!"
+        echo "Download Link: $DOWNLOAD_PAGE"
