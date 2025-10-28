@@ -42,4 +42,5 @@ You are only who responsible for any actions you take. Always back up your stock
 # Credits
 
 @phhusson original reverse engineering code developer.
+
 @ravindu644 patches for more devices.
