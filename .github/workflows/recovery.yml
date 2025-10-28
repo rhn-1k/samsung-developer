@@ -6,7 +6,6 @@ on:
       RECOVERY_URL:
         description: 'RECOVERY URL'
         required: true
-        default: ''
 
 jobs:
   build:
