@@ -9,7 +9,6 @@ repository provides automated Github Actions workflows to prepare your Samsung d
 2. Go to the "Actions" tab in your forked repository.
 3. Choose the workflow you want to run.
 
----
 
 # 1. To Patch `recovery.img` (Enable `fastbootd mode`)
 
@@ -34,8 +33,7 @@ This workflow disables `dm-verity` and Android Verified Boot, allowing you to bo
 
 `patched_vbmeta.tar` file will be available in the Artifacts, Flash it in Odin's `AP` slot.
 
-**`please make sure the file inside the tar ends with .img, if not just extract it and flash normally.`**
----
+`please make sure the file inside the tar ends with .img, if not just extract it and flash normally`
 
 ## Disclaimer
 
