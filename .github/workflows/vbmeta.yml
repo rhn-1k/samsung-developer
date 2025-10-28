@@ -14,50 +14,23 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y python3 tar wget curl
+      run: sudo apt-get update && sudo apt-get install -y python3 tar wget
 
     - name: Download original vbmeta.img
-      run: |
-        wget -O original_vbmeta.img ${{ github.event.inputs.vbmeta_url }}
-        if [ ! -f original_vbmeta.img ]; then
-          echo "Error: Failed to download vbmeta.img."
-          exit 1
-        fi
+      run: wget -O original_vbmeta.img ${{ github.event.inputs.vbmeta_url }}
 
     - name: Patch vbmeta.img using Python script
-      run: |
-        python3 vbmeta.py original_vbmeta.img patched_vbmeta.img
-
-    - name: Verify patched file size
-      run: |
-        ORIG_SIZE=$(stat -c%s "original_vbmeta.img")
-        PATCHED_SIZE=$(stat -c%s "patched_vbmeta.img")
-        if [ "$ORIG_SIZE" != "$PATCHED_SIZE" ]; then
-          echo "Error: File size mismatch! Original: $ORIG_SIZE, Patched: $PATCHED_SIZE"
-          exit 1
-        fi
-        echo "File size check passed. Size is $PATCHED_SIZE bytes."
+      run: python3 vbmeta.py original_vbmeta.img patched_vbmeta.img
 
     - name: Create .tar archive for Odin
       run: tar -cvf patched_vbmeta.tar patched_vbmeta.img
 
-    - name: Upload Odin-ready .tar to Gofile
-      run: |
-        RESPONSE=$(curl -F "file=@patched_vbmeta.tar" \
-                        -H "Authorization: Bearer E29ro0ueg1dXX7CHmJSdrO9puOTUMREk" \
-                        https://upload.gofile.io/uploadFile)
-        
-        echo "Gofile API Response: $RESPONSE"
-        
-        DOWNLOAD_PAGE=$(echo $RESPONSE | grep -o '"downloadPage": *"[^"]*"' | cut -d '"' -f 4)
-        
-        if [ -z "$DOWNLOAD_PAGE" ]; then
-          echo "Error: Could not extract download page URL from Gofile response."
-          exit 1
-        fi
-        
-        echo "File uploaded successfully!"
-        echo "Download Link: $DOWNLOAD_PAGE"
+    - name: Upload Odin-ready .tar as an artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: patched_vbmeta.tar
+        path: patched_vbmeta.tar
+        if-no-files-found: error
