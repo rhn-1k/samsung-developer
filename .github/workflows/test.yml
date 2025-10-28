@@ -1,0 +1,40 @@
+name: Generate TWRP Device Tree
+
+on:
+  workflow_dispatch:
+    inputs:
+      recovery_url:
+        description: 'Direct download URL for recovery.img'
+        required: true
+        type: string
+
+jobs:
+  generate-tree:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip cpio zip
+        pip3 install twrpdtgen
+
+    - name: Download recovery image
+      run: wget -O recovery.img "${{ github.event.inputs.recovery_url }}"
+
+    - name: Generate Device Tree
+      id: gentree
+      run: |
+        python3 -m twrpdtgen recovery.img
+        DEVICE_TREE_PATH=$(find output -maxdepth 2 -mindepth 2 -type d)
+        echo "DEVICE_TREE_PATH=${DEVICE_TREE_PATH}" >> $GITHUB_ENV
+
+    - name: Package the device tree into a zip file
+      run: zip -r device_tree.zip ${{ env.DEVICE_TREE_PATH }}
+
+    - name: Upload Device Tree as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: twrp-device-tree.zip
+        path: device_tree.zip
+        if-no-files-found: error
